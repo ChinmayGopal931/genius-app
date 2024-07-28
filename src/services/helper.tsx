@@ -94,13 +94,8 @@ export async function mintPKP(authMethod: AuthMethod): Promise<IRelayPKP> {
     txHash || ""
   );
 
-  console.log("mintPKP provider", provider);
-  console.log("mintPKP options", options);
-  console.log("mintPKP txHash: ", txHash);
-  console.log("mintPKP response: ", response);
-
   if (
-    response?.status !== "Succeeded" ||
+    !response ||
     !response.pkpTokenId ||
     !response.pkpPublicKey ||
     !response.pkpEthAddress
@@ -143,8 +138,6 @@ export async function getSessionSigs({
       },
     ],
   });
-
-  console.log(litNodeClient);
 
   // const sessionSigs = await litNodeClient.getSessionSigs({
   //   chain: "sepolia",
@@ -196,7 +189,6 @@ export const authNeededCallback = async ({
   expiration,
   resourceAbilityRequests,
 }: AuthCallbackParams) => {
-  console.log("%%%%%%%%%%%%%%%%%%%%%%%%");
   const wallet = new ethers.Wallet(WALLET);
   if (!uri) throw "Invliad URI";
   if (!expiration) throw "Invliad expiration";
