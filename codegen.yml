@@ -1,0 +1,9 @@
+overwrite: true
+schema: "https://api.studio.thegraph.com/query/75405/opentrade-pool/version/latest"
+documents: "src/**/*.graphql"
+generates:
+  src/generated/graphql.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-react-apollo"
