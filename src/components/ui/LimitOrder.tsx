@@ -6,6 +6,17 @@ import { useToast } from "@/components/ui/use-toast";
 import { LitNodeClient } from "@lit-protocol/lit-node-client";
 import { IRelayPKP, SessionSigs } from "@lit-protocol/types";
 import { ethers } from "ethers";
+import { litNodeClient } from "@/services/helper";
+import * as LitJsSdk from "@lit-protocol/lit-node-client";
+import fs from "fs";
+import { serialize, recoverAddress } from "@ethersproject/transactions";
+import {
+  hexlify,
+  splitSignature,
+  hexZeroPad,
+  joinSignature,
+} from "@ethersproject/bytes";
+import { recoverPublicKey, computePublicKey } from "@ethersproject/signing-key";
 
 // You might want to move these to a constants file
 const SWAP_ROUTER_ADDRESS = "0xE592427A0AEce92De3Edee1F18E0157C05861564"; // Uniswap V3 SwapRouter
@@ -56,36 +67,41 @@ const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
   };
 
   const litActionCode = `
-    const go = async () => {
-      // Ensure the required parameters are passed
-      if (!calldata || !to || !value) {
-        throw new Error("Missing required parameters");
-      }
-
-      // Sign the transaction
-      const sigShare = await LitActions.signEcdsa({ 
-        toSign: calldata,
-        publicKey,
-        sigName: "sig1"
-      });
-
-      // Construct the transaction object
-      const tx = {
-        to: to,
-        data: calldata,
-        value: value,
-        gasLimit: gasLimit || "300000", // You might want to estimate this
-        gasPrice: gasPrice || await Lit.Actions.getGasPrice({ chain: 'ethereum' }),
-      };
-
-      // Send the transaction
-      const response = await eth.sendTransaction(tx);
-
-      // Return the transaction hash
-      return { txHash: response.hash };
+  const go = async () => {
+    // Prepare the transaction parameters
+    const txParams = {
+      to: UNISWAP_ROUTER_ADDRESS,
+      data: web3.eth.abi.encodeFunctionCall({
+        name: 'swapExactTokensForTokens',
+        type: 'function',
+        inputs: [
+          { type: 'uint256', name: 'amountIn' },
+          { type: 'uint256', name: 'amountOutMin' },
+          { type: 'address[]', name: 'path' },
+          { type: 'address', name: 'to' },
+          { type: 'uint256', name: 'deadline' }
+        ]
+      }, [amountIn, amountOutMin, path, to, deadline]),
+      gasLimit: '300000', // Adjust as needed
+      gasPrice: await web3.eth.getGasPrice(),
+      nonce: await web3.eth.getTransactionCount(fromAddress),
+      chainId: chainId // e.g., 1 for Ethereum mainnet
     };
-
-    go();
+  
+    // Sign the transaction
+    const toSign = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.serializeTransaction(txParams)));
+    const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName: 'sig1' });
+  
+    // Return the transaction parameters and signature
+    LitActions.setResponse({
+      response: JSON.stringify({
+        txParams,
+        signature: sigShare
+      })
+    });
+  };
+  
+  go();
   `;
 
   const submitLimitOrder = async () => {
@@ -115,8 +131,16 @@ const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
         amountOutMinimum.toString()
       );
 
-      const litNodeClient = new LitNodeClient({ litNetwork: "datil-dev" });
       await litNodeClient.connect();
+
+      if (!litNodeClient.ready) {
+        toast({
+          title: "Lit Node Client is not available",
+          description: "PKP or session not available",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const results = await litNodeClient.executeJs({
         code: litActionCode,
@@ -126,6 +150,7 @@ const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
           to: SWAP_ROUTER_ADDRESS,
           value: amountIn.toString(), // We're swapping ETH, so we need to send the value
           publicKey: pkpInfo.publicKey,
+          userAddress: "0x9B4063C5C44882A79dA4e15943D17dcF17af2E1B",
         },
       });
 

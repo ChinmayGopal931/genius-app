@@ -20,124 +20,24 @@ import { AuthMethodType } from "@lit-protocol/constants";
 
 import { isSignInRedirect } from "@lit-protocol/lit-auth-client";
 import useGenerateOAuth from "@/hooks/useGenerateOAuth";
-import useFetchSessionSignatures from "@/hooks/useFetchSessionSignatures";
+import useFetchSessionSignatures from "@/hooks/useFetchSession";
 import useFetchPKp from "@/hooks/useFetchPkp";
-
-export type LoadingState = "auth" | "accounts" | "session" | null;
-export const loadingCopyMap: Record<NonNullable<LoadingState>, string> = {
-  auth: "Authenticating your credentials...",
-  accounts: "Creating your account...",
-  session: "Securing your session...",
-};
+import useSession from "@/hooks/useFetchSession";
+import useFetchSession from "@/hooks/useFetchSession";
 
 export default function Dashboard() {
   const [isCreatingPKP, setIsCreatingPKP] = useState(false);
   const [pkpInfo, setPkpInfo] = useState<IRelayPKP | null>(null);
   // const [sessionSigs, setSessionSigs] = useState<SessionSigs | null>(null);
 
-  const { toast } = useToast();
-
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    checkAndCompleteAuth();
-  }, []);
-
-  async function checkAndCompleteAuth() {
-    try {
-      if (isSignInRedirect(REDIRECT_URI)) {
-        const authMethod = await handleRedirect();
-        if (authMethod) {
-          await handlePKP(authMethod);
-          navigate(window.location.pathname, { replace: false });
-        }
-      }
-    } catch (error) {
-      console.error("Error checking auth:", error);
-      toast({
-        title: "Error checking authentication",
-        description: "Please try signing in again.",
-        variant: "destructive",
-      });
-    }
-  }
-
-  async function handlePKP(authMethod: AuthMethod) {
-    setIsCreatingPKP(true);
-    try {
-      const existingPKPs = await getPKPs(authMethod);
-
-      let pkp;
-      if (existingPKPs.length > 0) {
-        pkp = existingPKPs[0];
-        setPkpInfo(pkp);
-        toast({
-          title: "Existing PKP found and loaded!",
-        });
-      } else {
-        pkp = await mintPKP(authMethod);
-        setPkpInfo(pkp);
-        toast({
-          title: "New PKP created successfully!",
-        });
-      }
-
-      const chain = "sepolia";
-      const expiration = new Date(
-        Date.now() + 1000 * 60 * 60 * 24 * 7
-      ).toISOString();
-
-      const sigs = await getSessionSigs({
-        pkpPublicKey: pkp.publicKey,
-        authMethod,
-        sessionSigsParams: {
-          chain,
-          expiration,
-          resourceAbilityRequests: [
-            {
-              resource: new LitActionResource("*"),
-              ability: LitAbility.PKPSigning,
-            },
-          ],
-          authNeededCallback: authNeededCallback,
-        },
-      });
-
-      //setSessionSigs(sigs);
-      toast({
-        title: "Session created successfully!",
-      });
-    } catch (error) {
-      console.error("Error handling PKP:", error);
-      toast({
-        title: "Failed to handle PKP or create session",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingPKP(false);
-    }
-  }
-
-  async function authWithGoogle() {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error("Error during Google auth:", error);
-      toast({
-        title: "Failed to authenticate with Google",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    }
-  }
   const redirectUri = ORIGIN;
 
   const {
+    initSession,
     sessionSigs,
     loading: sessionLoading,
     error: sessionError,
-  } = useFetchSessionSignatures();
+  } = useFetchSession();
 
   const {
     authMethod,
@@ -149,18 +49,17 @@ export default function Dashboard() {
     createAccount,
     currentAccount,
     loading: accountsLoading,
-    error: accountsError,
   } = useFetchPKp();
 
   console.log(sessionSigs, authMethod, currentAccount);
 
-  useEffect(() => {
-    if (authMethod) {
-      navigate(window.location.pathname, { replace: true });
-      console.log("authMethod: ", authMethod);
-      createAccount(authMethod);
-    }
-  }, [authMethod, createAccount]);
+  // useEffect(() => {
+  //   if (authMethod && authMethod.authMethodType !== AuthMethodType.WebAuthn) {
+  //     navigate(window.location.pathname, { replace: true });
+  //     console.log("authMethod: ", authMethod);
+  //     createAccount(authMethod);
+  //   }
+  // }, [authMethod, createAccount]);
 
   // useEffect(() => {
   //   if (authMethod && currentAccount) {
@@ -168,7 +67,24 @@ export default function Dashboard() {
   //   }
   // }, [authMethod, currentAccount, initSession]);
 
-  console.log(sessionSigs);
+  useEffect(() => {
+    if (
+      authMethod &&
+      authMethod.authMethodType !== AuthMethodType.WebAuthn &&
+      !currentAccount &&
+      !isLoading
+    ) {
+      createAccount(authMethod).then((account) => {
+        if (account) {
+          setPkpInfo(account);
+          initSession(authMethod, account);
+        }
+      });
+    }
+  }, [authMethod, createAccount, currentAccount, initSession]);
+
+  const isLoading =
+    authLoading || accountsLoading || sessionLoading || isCreatingPKP;
 
   return (
     <div>
@@ -182,7 +98,7 @@ export default function Dashboard() {
         </div>
 
         <Button onClick={signInWithGoogle} disabled={isCreatingPKP}>
-          {isCreatingPKP
+          {isCreatingPKP || isLoading
             ? "Processing..."
             : "Create or Load Lit PKP / Ethereum Wallet with Google Account"}
         </Button>

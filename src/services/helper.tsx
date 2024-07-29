@@ -1,3 +1,5 @@
+// src/utils/litHelpers.ts
+
 import { LitNodeClient } from "@lit-protocol/lit-node-client";
 import {
   GoogleProvider,
@@ -39,12 +41,13 @@ export const litNodeClient = new LitNodeClient({
   alertWhenUnauthorized: false,
   litNetwork: "datil-dev",
   debug: true,
-  rpcUrl: import.meta.env.VITE_RPC,
+  rpcUrl:
+    "https://eth-sepolia.g.alchemy.com/v2/lkFGfQpATYx05UzRcgRDUalSw6CCSq8a",
 });
 
 export const litAuthClient = new LitAuthClient({
   litRelayConfig: {
-    relayApiKey: import.meta.env.VITE_API_KEY,
+    relayApiKey: "15f362f6-a0cd-4f27-a02c-07311831389a_brihu",
   },
   litNodeClient,
 });
@@ -85,6 +88,9 @@ export async function getPKPs(authMethod: AuthMethod): Promise<IRelayPKP[]> {
 }
 
 export async function mintPKP(authMethod: AuthMethod): Promise<IRelayPKP> {
+  await litNodeClient.connect();
+  if (!litNodeClient.ready) throw "litNodeClient not ready";
+
   const provider = litAuthClient.getProvider(ProviderType.Google);
   const options = {
     permittedAuthMethodScopes: [[AuthMethodScope.SignAnything]],
@@ -94,8 +100,13 @@ export async function mintPKP(authMethod: AuthMethod): Promise<IRelayPKP> {
     txHash || ""
   );
 
+  console.log("mintPKP provider", provider);
+  console.log("mintPKP options", options);
+  console.log("mintPKP txHash: ", txHash);
+  console.log("mintPKP response: ", response);
+
   if (
-    !response ||
+    response?.status !== "Succeeded" ||
     !response.pkpTokenId ||
     !response.pkpPublicKey ||
     !response.pkpEthAddress
@@ -120,6 +131,9 @@ export async function getSessionSigs({
   authMethod: AuthMethod;
   sessionSigsParams: GetSessionSigsProps;
 }): Promise<SessionSigs> {
+  await litNodeClient.connect();
+  if (!litNodeClient.ready) throw "litNodeClient not ready";
+
   const sessionSigs = await litNodeClient.getPkpSessionSigs({
     pkpPublicKey: pkpPublicKey,
     authMethods: [authMethod],
@@ -138,6 +152,8 @@ export async function getSessionSigs({
       },
     ],
   });
+
+  console.log(litNodeClient);
 
   // const sessionSigs = await litNodeClient.getSessionSigs({
   //   chain: "sepolia",
@@ -189,6 +205,7 @@ export const authNeededCallback = async ({
   expiration,
   resourceAbilityRequests,
 }: AuthCallbackParams) => {
+  console.log("%%%%%%%%%%%%%%%%%%%%%%%%");
   const wallet = new ethers.Wallet(WALLET);
   if (!uri) throw "Invliad URI";
   if (!expiration) throw "Invliad expiration";
