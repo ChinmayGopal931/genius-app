@@ -150,7 +150,7 @@ const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
           to: SWAP_ROUTER_ADDRESS,
           value: amountIn.toString(), // We're swapping ETH, so we need to send the value
           publicKey: pkpInfo.publicKey,
-          userAddress: "0x9B4063C5C44882A79dA4e15943D17dcF17af2E1B",
+          userAddress: pkpInfo.ethAddress,
         },
       });
 

@@ -59,3 +59,4 @@ npx shadcn-ui@latest add select
 # Genius-frontend
 # genius-app
 # genius-app
+# genius-app

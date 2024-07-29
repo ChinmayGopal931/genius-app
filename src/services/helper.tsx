@@ -41,13 +41,12 @@ export const litNodeClient = new LitNodeClient({
   alertWhenUnauthorized: false,
   litNetwork: "datil-dev",
   debug: true,
-  rpcUrl:
-    "https://eth-sepolia.g.alchemy.com/v2/lkFGfQpATYx05UzRcgRDUalSw6CCSq8a",
+  rpcUrl: import.meta.env.VITE_RPC_URL,
 });
 
 export const litAuthClient = new LitAuthClient({
   litRelayConfig: {
-    relayApiKey: "15f362f6-a0cd-4f27-a02c-07311831389a_brihu",
+    relayApiKey: import.meta.env.VITE_LIT_RELAY_API_KEY,
   },
   litNodeClient,
 });
