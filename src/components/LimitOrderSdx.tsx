@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Button } from "@/components/shadcn/button";
-import { Input } from "@/components/shadcn/input";
 import { useToast } from "@/components/ui/use-toast";
 import { SessionSigs, IRelayPKP } from "@lit-protocol/types";
 import { litNodeClient } from "@/services/helper";
@@ -19,20 +18,13 @@ const LimitOrderSDK: React.FC<LimitOrderFormProps> = ({
   const [price, setPrice] = useState("");
   const { toast } = useToast();
 
-  console.log(
-    pkpInfo,
-    ethers.utils.arrayify(
-      ethers.utils.keccak256(ethers.utils.toUtf8Bytes("Hello World"))
-    )
-  );
-
   const litActionCode = `
   const signEcdsa = async () => {
     const message = ethers.utils.arrayify(
         ethers.utils.keccak256(ethers.utils.toUtf8Bytes("Hello"))
       );
 
-      console.log(message)
+      console.log(message )
     
     const resp = await Lit.Actions.call({
       ipfsId: "QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm",
@@ -60,12 +52,6 @@ const LimitOrderSDK: React.FC<LimitOrderFormProps> = ({
 
     await litNodeClient.connect().then(async () => {
       try {
-        // const sigShare = await LitActions.signEcdsa({
-        //   toSign: message,
-        //   publicKey,
-        //   sigName: "sig1",
-        // });
-        console.log(sessionSigs);
         const executionResult = await litNodeClient.executeJs({
           code: litActionCode,
           sessionSigs,

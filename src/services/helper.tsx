@@ -1,5 +1,3 @@
-// src/utils/litHelpers.ts
-
 import { LitNodeClient } from "@lit-protocol/lit-node-client";
 import {
   GoogleProvider,
@@ -18,8 +16,6 @@ import {
   IRelayPKP,
   SessionSigs,
   GetSessionSigsProps,
-  ILitResource,
-  LitResourcePrefix,
 } from "@lit-protocol/types";
 import { ethers } from "ethers";
 import {
@@ -101,11 +97,6 @@ export async function mintPKP(authMethod: AuthMethod): Promise<IRelayPKP> {
     txHash || ""
   );
 
-  console.log("mintPKP provider", provider);
-  console.log("mintPKP options", options);
-  console.log("mintPKP txHash: ", txHash);
-  console.log("mintPKP response: ", response);
-
   if (
     response?.status !== "Succeeded" ||
     !response.pkpTokenId ||
@@ -154,52 +145,8 @@ export async function getSessionSigs({
     ],
   });
 
-  console.log(litNodeClient);
-
-  // const sessionSigs = await litNodeClient.getSessionSigs({
-  //   chain: "sepolia",
-  //   resourceAbilityRequests: [
-  //     {
-  //       resource: new LitActionResource("*"),
-  //       ability: LitAbility.LitActionExecution,
-  //     },
-  //   ],
-  //   authNeededCallback,
-  // });
-
   return sessionSigs;
 }
-
-// In litHelpers.ts
-
-// export const authNeededCallback = async ({
-//   uri,
-//   expiration,
-//   resourceAbilityRequests,
-// }: AuthCallbackParams): Promise<AuthSig> => {
-//   const wallet = new ethers.Wallet(WALLET);
-
-//   if (!uri) throw "Invliad URI";
-//   if (!expiration) throw "Invliad expiration";
-//   if (!resourceAbilityRequests) throw "Invliad resources";
-
-//   const toSign = await createSiweMessageWithRecaps({
-//     uri: uri,
-//     expiration: expiration,
-//     resources: resourceAbilityRequests,
-//     walletAddress: wallet.address,
-//     nonce: await litNodeClient.getLatestBlockhash(),
-//     litNodeClient: litNodeClient,
-//   });
-//   const signature = await wallet.signMessage(toSign);
-
-//   return {
-//     sig: signature,
-//     derivedVia: "web3.eth.personal.sign",
-//     signedMessage: toSign,
-//     address: wallet.address,
-//   };
-// };
 
 export const authNeededCallback = async ({
   uri,
@@ -207,7 +154,6 @@ export const authNeededCallback = async ({
   resourceAbilityRequests,
 }: AuthCallbackParams) => {
   try {
-    console.log("%%%%%%%%%%%%%%%%%%%%%%%%");
     const wallet = new ethers.Wallet(WALLET);
     if (!uri) throw "Invliad URI";
     if (!expiration) throw "Invliad expiration";
@@ -239,48 +185,3 @@ export const authNeededCallback = async ({
     throw error;
   }
 };
-
-export async function handleGoogleLogin() {
-  await signInWithGoogle();
-}
-
-// async function encryptLimitOrder(
-//   litNodeClient: LitJsSdk.LitNodeClient,
-//   pkpPublicKey: string,
-//   limitOrder: {
-//     amountIn: string;
-//     amountOutMin: string;
-//     path: string[];
-//     to: string;
-//     deadline: number;
-//   }
-// ) {
-//   // Convert the limit order to a string
-//   const limitOrderString = JSON.stringify(limitOrder);
-
-//   // Generate a random symmetric key
-//   const symmetricKey = await LitJsSdk.generateSymmetricKey();
-
-//   // Encrypt the limit order with the symmetric key
-//   const encryptedString = await LitJsSdk.encryptString(
-//     limitOrderString,
-//     symmetricKey
-//   );
-
-//   // Encrypt the symmetric key with the PKP's public key
-//   const encryptedSymmetricKey = await litNodeClient.encryptWithPubKey(
-//     ethers.utils.arrayify(symmetricKey),
-//     pkpPublicKey
-//   );
-
-//   // Combine the encrypted data and encrypted symmetric key
-//   const encryptedData = {
-//     encryptedString: encryptedString,
-//     encryptedSymmetricKey: LitJsSdk.uint8arrayToString(
-//       encryptedSymmetricKey,
-//       "base16"
-//     ),
-//   };
-
-//   return encryptedData;
-// }

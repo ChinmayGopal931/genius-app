@@ -1,35 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { PageHeader, PageHeaderHeading } from "@/components/shadcn/page-header";
 import { Button } from "@/components/shadcn/button";
-import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
-import { AuthMethod, IRelayPKP, SessionSigs } from "@lit-protocol/types";
-import LimitOrderForm from "@/components/ui/LimitOrder";
-import {
-  REDIRECT_URI,
-  handleRedirect,
-  signInWithGoogle,
-  getPKPs,
-  mintPKP,
-  ORIGIN,
-  authNeededCallback,
-  getSessionSigs,
-} from "@/services/helper";
-import { LitAbility, LitActionResource } from "@lit-protocol/auth-helpers";
+
+import { IRelayPKP } from "@lit-protocol/types";
+import { ORIGIN, signInWithGoogle } from "@/services/helper";
 import { AuthMethodType } from "@lit-protocol/constants";
 
-import { isSignInRedirect } from "@lit-protocol/lit-auth-client";
 import useGenerateOAuth from "@/hooks/useGenerateOAuth";
-import useFetchSessionSignatures from "@/hooks/useFetchSession";
 import useFetchPKp from "@/hooks/useFetchPkp";
-import useSession from "@/hooks/useFetchSession";
 import useFetchSession from "@/hooks/useFetchSession";
 import LimitOrderSDK from "@/components/LimitOrderSdx";
 
 export default function Dashboard() {
   const [isCreatingPKP, setIsCreatingPKP] = useState(false);
   const [pkpInfo, setPkpInfo] = useState<IRelayPKP | null>(null);
-  // const [sessionSigs, setSessionSigs] = useState<SessionSigs | null>(null);
 
   const redirectUri = ORIGIN;
 
