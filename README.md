@@ -62,8 +62,6 @@ npx shadcn-ui@latest add select
 
 # QUESTION #1:
 
-Take a look at the 4 functions above. They all handle internal accounting in one way or another when tokens are staked, or deposited by the protocol. Your task is to:
-
 1. Describe the functionality of each function
 
     a/ _updateAvailableAssets():
