@@ -42,11 +42,7 @@ export default function useFetchSession() {
           setSessionSigs(sessionSigs);
         });
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("an unknown error in initSession"));
-        }
+        setError(new Error(`${err}`));
       } finally {
         setLoading(false);
       }

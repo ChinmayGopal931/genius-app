@@ -32,11 +32,7 @@ export default function useGenerateOAuth(redirectUri?: string) {
             const newAuthMethod = await googleProvider.authenticate();
             setAuthMethod(newAuthMethod);
           } catch (err) {
-            if (err instanceof Error) {
-              setError(err);
-            } else {
-              setError(new Error("Unknown error during Google authentication"));
-            }
+            setError(new Error(`${err}`));
           } finally {
             setLoading(false);
           }

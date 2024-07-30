@@ -25,11 +25,7 @@ export default function useFetchPkp() {
 
         return myPKPs;
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error occurred in fetchAccounts"));
-        }
+        setError(new Error(`${err}`));
         return [];
       } finally {
         setLoading(false);
@@ -58,11 +54,7 @@ export default function useFetchPkp() {
         setCurrentAccount(newPKP);
         return newPKP;
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err);
-        } else {
-          setError(new Error("Unknown error in createAccount"));
-        }
+        setError(new Error(`${err}`));
         return undefined;
       } finally {
         setLoading(false);
