@@ -15,18 +15,7 @@ import {
 } from "@lit-protocol/types";
 import { ethers } from "ethers";
 import { authNeededCallback, litNodeClient } from "@/services/helper";
-import * as LitJsSdk from "@lit-protocol/lit-node-client";
-import fs from "fs";
-import { serialize, recoverAddress } from "@ethersproject/transactions";
-import {
-  hexlify,
-  splitSignature,
-  hexZeroPad,
-  joinSignature,
-} from "@ethersproject/bytes";
-import { recoverPublicKey, computePublicKey } from "@ethersproject/signing-key";
 
-// You might want to move these to a constants file
 const SWAP_ROUTER_ADDRESS = "0xE592427A0AEce92De3Edee1F18E0157C05861564"; // Uniswap V3 SwapRouter
 const WETH_ADDRESS = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
