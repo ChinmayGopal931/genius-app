@@ -20,27 +20,27 @@ export default function useFetchSession() {
           Date.now() + 1000 * 60 * 60 * 24 * 7
         ).toISOString();
 
-        await litNodeClient.connect();
+        await litNodeClient.connect().then(async () => {
+          if (!litNodeClient.ready) throw "litNodeClient not ready";
 
-        if (!litNodeClient.ready) throw "litNodeClient not ready";
+          const sessionSigs = await litNodeClient.getPkpSessionSigs({
+            pkpPublicKey: pkp.publicKey,
+            authMethods: [authMethod],
+            expiration,
+            resourceAbilityRequests: [
+              {
+                resource: new LitPKPResource("*"),
+                ability: LitAbility.PKPSigning,
+              },
+              {
+                resource: new LitActionResource("*"),
+                ability: LitAbility.LitActionExecution,
+              },
+            ],
+          });
 
-        const sessionSigs = await litNodeClient.getPkpSessionSigs({
-          pkpPublicKey: pkp.publicKey,
-          authMethods: [authMethod],
-          expiration,
-          resourceAbilityRequests: [
-            {
-              resource: new LitPKPResource("*"),
-              ability: LitAbility.PKPSigning,
-            },
-            {
-              resource: new LitActionResource("*"),
-              ability: LitAbility.LitActionExecution,
-            },
-          ],
+          setSessionSigs(sessionSigs);
         });
-
-        setSessionSigs(sessionSigs);
       } catch (err) {
         if (err instanceof Error) {
           setError(err);
