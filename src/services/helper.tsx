@@ -18,6 +18,8 @@ import {
   IRelayPKP,
   SessionSigs,
   GetSessionSigsProps,
+  ILitResource,
+  LitResourcePrefix,
 } from "@lit-protocol/types";
 import { ethers } from "ethers";
 import {
@@ -204,35 +206,81 @@ export const authNeededCallback = async ({
   expiration,
   resourceAbilityRequests,
 }: AuthCallbackParams) => {
-  console.log("%%%%%%%%%%%%%%%%%%%%%%%%");
-  const wallet = new ethers.Wallet(WALLET);
-  if (!uri) throw "Invliad URI";
-  if (!expiration) throw "Invliad expiration";
-  if (!resourceAbilityRequests) throw "Invliad resources";
+  try {
+    console.log("%%%%%%%%%%%%%%%%%%%%%%%%");
+    const wallet = new ethers.Wallet(WALLET);
+    if (!uri) throw "Invliad URI";
+    if (!expiration) throw "Invliad expiration";
+    if (!resourceAbilityRequests) throw "Invliad resources";
 
-  // Prepare the SIWE message for signing
-  const toSign = await createSiweMessageWithRecaps({
-    uri: uri,
-    expiration: expiration,
-    resources: resourceAbilityRequests,
-    walletAddress: wallet.address,
-    nonce: await litNodeClient.getLatestBlockhash(),
-    litNodeClient: litNodeClient,
-  });
-  // Use the Ethereum wallet to sign the message, return the digital signature
-  const signature = await wallet.signMessage(toSign);
+    // Prepare the SIWE message for signing
+    const toSign = await createSiweMessageWithRecaps({
+      uri: uri,
+      expiration: expiration,
+      resources: resourceAbilityRequests,
+      walletAddress: wallet.address,
+      nonce: await litNodeClient.getLatestBlockhash(),
+      litNodeClient: litNodeClient,
+    });
+    // Use the Ethereum wallet to sign the message, return the digital signature
+    const signature = await wallet.signMessage(toSign);
 
-  // Create an AuthSig using the derived signature, the message, and wallet address
-  const authSig = {
-    sig: signature,
-    derivedVia: "web3.eth.personal.sign",
-    signedMessage: toSign,
-    address: wallet.address,
-  };
+    // Create an AuthSig using the derived signature, the message, and wallet address
+    const authSig = {
+      sig: signature,
+      derivedVia: "web3.eth.personal.sign",
+      signedMessage: toSign,
+      address: wallet.address,
+    };
 
-  return authSig;
+    return authSig;
+  } catch (error) {
+    console.error("Error in authNeededCallback:", error);
+    throw error;
+  }
 };
 
 export async function handleGoogleLogin() {
   await signInWithGoogle();
 }
+
+// async function encryptLimitOrder(
+//   litNodeClient: LitJsSdk.LitNodeClient,
+//   pkpPublicKey: string,
+//   limitOrder: {
+//     amountIn: string;
+//     amountOutMin: string;
+//     path: string[];
+//     to: string;
+//     deadline: number;
+//   }
+// ) {
+//   // Convert the limit order to a string
+//   const limitOrderString = JSON.stringify(limitOrder);
+
+//   // Generate a random symmetric key
+//   const symmetricKey = await LitJsSdk.generateSymmetricKey();
+
+//   // Encrypt the limit order with the symmetric key
+//   const encryptedString = await LitJsSdk.encryptString(
+//     limitOrderString,
+//     symmetricKey
+//   );
+
+//   // Encrypt the symmetric key with the PKP's public key
+//   const encryptedSymmetricKey = await litNodeClient.encryptWithPubKey(
+//     ethers.utils.arrayify(symmetricKey),
+//     pkpPublicKey
+//   );
+
+//   // Combine the encrypted data and encrypted symmetric key
+//   const encryptedData = {
+//     encryptedString: encryptedString,
+//     encryptedSymmetricKey: LitJsSdk.uint8arrayToString(
+//       encryptedSymmetricKey,
+//       "base16"
+//     ),
+//   };
+
+//   return encryptedData;
+// }

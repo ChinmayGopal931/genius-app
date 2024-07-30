@@ -24,6 +24,7 @@ import useFetchSessionSignatures from "@/hooks/useFetchSession";
 import useFetchPKp from "@/hooks/useFetchPkp";
 import useSession from "@/hooks/useFetchSession";
 import useFetchSession from "@/hooks/useFetchSession";
+import LimitOrderSDK from "@/components/LimitOrderSdx";
 
 export default function Dashboard() {
   const [isCreatingPKP, setIsCreatingPKP] = useState(false);
@@ -51,7 +52,13 @@ export default function Dashboard() {
     loading: accountsLoading,
   } = useFetchPKp();
 
-  console.log(sessionSigs, authMethod, currentAccount);
+  console.log(
+    sessionSigs,
+    authMethod,
+    currentAccount,
+    import.meta.env.VITE_LIT_RELAY_API_KEY,
+    import.meta.env.VITE_RPC_URL
+  );
 
   // useEffect(() => {
   //   if (authMethod && authMethod.authMethodType !== AuthMethodType.WebAuthn) {
@@ -118,8 +125,12 @@ export default function Dashboard() {
           </div>
         )}
 
-        {currentAccount && sessionSigs && (
+        {/* {currentAccount && sessionSigs && (
           <LimitOrderForm pkpInfo={pkpInfo} sessionSigs={sessionSigs} />
+        )} */}
+
+        {currentAccount && sessionSigs && (
+          <LimitOrderSDK pkpInfo={pkpInfo} sessionSigs={sessionSigs} />
         )}
       </div>
     </div>

@@ -4,9 +4,17 @@ import { Button } from "@/components/shadcn/button";
 import { Input } from "@/components/shadcn/input";
 import { useToast } from "@/components/ui/use-toast";
 import { LitNodeClient } from "@lit-protocol/lit-node-client";
-import { IRelayPKP, SessionSigs } from "@lit-protocol/types";
+import {
+  LitAbility,
+  ILitResource,
+  AuthSig,
+  GetSessionSigsProps,
+  LitResourcePrefix,
+  SessionSigs,
+  IRelayPKP,
+} from "@lit-protocol/types";
 import { ethers } from "ethers";
-import { litNodeClient } from "@/services/helper";
+import { authNeededCallback, litNodeClient } from "@/services/helper";
 import * as LitJsSdk from "@lit-protocol/lit-node-client";
 import fs from "fs";
 import { serialize, recoverAddress } from "@ethersproject/transactions";
@@ -68,25 +76,26 @@ const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
 
   const litActionCode = `
   const go = async () => {
+    // Early return for testing
+    // LitActions.setResponse({ response: JSON.stringify({ status: "Action started" }) });
+    // return;
+
+    const SWAP_ROUTER_ADDRESS = "0xE592427A0AEce92De3Edee1F18E0157C05861564";
+    
     // Prepare the transaction parameters
     const txParams = {
-      to: UNISWAP_ROUTER_ADDRESS,
-      data: web3.eth.abi.encodeFunctionCall({
-        name: 'swapExactTokensForTokens',
-        type: 'function',
-        inputs: [
-          { type: 'uint256', name: 'amountIn' },
-          { type: 'uint256', name: 'amountOutMin' },
-          { type: 'address[]', name: 'path' },
-          { type: 'address', name: 'to' },
-          { type: 'uint256', name: 'deadline' }
-        ]
-      }, [amountIn, amountOutMin, path, to, deadline]),
-      gasLimit: '300000', // Adjust as needed
-      gasPrice: await web3.eth.getGasPrice(),
-      nonce: await web3.eth.getTransactionCount(fromAddress),
-      chainId: chainId // e.g., 1 for Ethereum mainnet
+      to: SWAP_ROUTER_ADDRESS,
+      data: calldata,
+      value: value,
+      gasLimit: '300000',
+      nonce: await ethers.providers.getDefaultProvider().getTransactionCount(userAddress),
+      chainId: 1,
     };
+
+
+    // Early return to check txParams
+    // LitActions.setResponse({ response: JSON.stringify({ txParams }) });
+    // return;
   
     // Sign the transaction
     const toSign = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.serializeTransaction(txParams)));
@@ -103,6 +112,63 @@ const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
   
   go();
   `;
+
+  const litActionCode2 = `
+  const go = async () => {
+    const { encryptedOrder, publicKey } = args;
+
+    const decryptedOrder = await LitActions.decryptString(encryptedOrder, publicKey);
+    const order = JSON.parse(decryptedOrder);
+
+    const poolAddress = await Lit.Actions.call({
+      ipfsId: "QmPoolAddressFunction",
+      params: { tokenA: order.tokenIn, tokenB: order.tokenOut, fee: 3000 }
+    });
+
+    const currentPrice = await Lit.Actions.call({
+      ipfsId: "QmGetCurrentPriceFunction",
+      params: { poolAddress }
+    });
+
+    if (currentPrice >= order.priceThreshold) {
+      const calldata = await Lit.Actions.call({
+        ipfsId: "QmGenerateSwapCalldataFunction",
+        params: {
+          tokenIn: order.tokenIn,
+          tokenOut: order.tokenOut,
+          fee: 3000,
+          recipient: LitActions.getParam('userAddress'),
+          deadline: Math.floor(Date.now() / 1000) + 3600,
+          amountIn: order.amountIn,
+          amountOutMinimum: order.minAmountOut
+        }
+      });
+
+      const sigShare = await LitActions.signEcdsa({ 
+        toSign: calldata, 
+        publicKey, 
+        sigName: "sig1" 
+      });
+
+      LitActions.setResponse({signedTx: sigShare});
+    } else {
+      LitActions.setResponse({message: "Price conditions not met"});
+    }
+  };
+
+  go();
+`;
+
+  const litResource: ILitResource = {
+    resource: litActionCode2,
+    getResourceKey: function (): string {
+      return "executeOrder-" + Date.now();
+    },
+    isValidLitAbility: function (litAbility: LitAbility): boolean {
+      return litAbility === LitAbility.LitActionExecution;
+    },
+    resourcePrefix: LitResourcePrefix.LitAction,
+  };
 
   const submitLimitOrder = async () => {
     if (!pkpInfo || !sessionSigs) {
@@ -131,6 +197,8 @@ const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
         amountOutMinimum.toString()
       );
 
+      console.log(calldata);
+
       await litNodeClient.connect();
 
       if (!litNodeClient.ready) {
@@ -142,23 +210,33 @@ const LimitOrderForm: React.FC<LimitOrderFormProps> = ({
         return;
       }
 
+      const sessionKey = litNodeClient.getSessionKey();
+
+      const sessionSigs = await litNodeClient.getSessionSigs({
+        chain: "sepolia",
+        resourceAbilityRequests: [
+          {
+            resource: litResource,
+            ability: LitAbility.LitActionExecution,
+          },
+        ],
+        expiration: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        sessionKey: sessionKey,
+        authNeededCallback: authNeededCallback,
+      } as GetSessionSigsProps);
+
       const results = await litNodeClient.executeJs({
         code: litActionCode,
-        sessionSigs: sessionSigs,
+        sessionSigs,
         jsParams: {
-          calldata: calldata,
-          to: SWAP_ROUTER_ADDRESS,
-          value: amountIn.toString(), // We're swapping ETH, so we need to send the value
+          encryptedOrder: calldata,
           publicKey: pkpInfo.publicKey,
           userAddress: pkpInfo.ethAddress,
         },
       });
 
-      const txHash = results.response;
-
       toast({
         title: "Limit order submitted",
-        description: `Transaction hash: ${txHash}`,
       });
     } catch (error) {
       console.error("Error submitting limit order:", error);
