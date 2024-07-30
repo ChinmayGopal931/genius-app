@@ -52,28 +52,6 @@ export default function Dashboard() {
     loading: accountsLoading,
   } = useFetchPKp();
 
-  console.log(
-    sessionSigs,
-    authMethod,
-    currentAccount,
-    import.meta.env.VITE_LIT_RELAY_API_KEY,
-    import.meta.env.VITE_RPC_URL
-  );
-
-  // useEffect(() => {
-  //   if (authMethod && authMethod.authMethodType !== AuthMethodType.WebAuthn) {
-  //     navigate(window.location.pathname, { replace: true });
-  //     console.log("authMethod: ", authMethod);
-  //     createAccount(authMethod);
-  //   }
-  // }, [authMethod, createAccount]);
-
-  // useEffect(() => {
-  //   if (authMethod && currentAccount) {
-  //     initSession(authMethod, currentAccount);
-  //   }
-  // }, [authMethod, currentAccount, initSession]);
-
   useEffect(() => {
     if (
       authMethod &&

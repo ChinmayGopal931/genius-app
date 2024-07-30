@@ -65,7 +65,7 @@ const LimitOrderSDK: React.FC<LimitOrderFormProps> = ({
                 "localhost wants you to sign in with your Ethereum account:\0x9B4063C5C44882A79dA4e15943D17dcF17af2E1B\n\nThis is a key for Partiful\n\nURI: https://localhost/login\nVersion: 1\nChain ID: 1\nNonce: 1LF00rraLO4f7ZSIt\nIssued At: 2022-06-03T05:59:09.959Z",
               address: "0x9B4063C5C44882A79dA4e15943D17dcF17af2E1B",
             },
-            chain: "ethereum",
+            chain: "sepolia",
           },
         });
 
