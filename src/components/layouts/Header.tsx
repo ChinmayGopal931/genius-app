@@ -3,8 +3,6 @@ import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/shadcn/sheet";
 
-import { mainMenu } from "@/config/menu";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Logo } from "../logo";
 import { Accordion } from "@radix-ui/react-accordion";
 import {
@@ -12,6 +10,37 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../shadcn/Accordion";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { Icons } from "../icons";
+
+interface NavItem {
+  title: string;
+  to?: string;
+  href?: string;
+  disabled?: boolean;
+  external?: boolean;
+  icon?: keyof typeof Icons;
+  label?: string;
+}
+
+interface NavItemWithChildren extends NavItem {
+  items?: NavItemWithChildren[];
+}
+
+export const mainMenu: NavItemWithChildren[] = [
+  {
+    title: "Stake",
+    to: "/",
+  },
+  {
+    title: "Portfolio",
+    to: "/portfolio",
+  },
+  {
+    title: "Analytics",
+    to: "/analytics",
+  },
+];
 
 export function Header() {
   const [open, setOpen] = useState(false);
