@@ -10,6 +10,7 @@ import useGenerateOAuth from "@/hooks/useGenerateOAuth";
 import useFetchPKp from "@/hooks/useFetchPkp";
 import useFetchSession from "@/hooks/useFetchSession";
 import LimitOrderSDK from "@/components/LimitOrderSdx";
+import LimitOrderForm from "@/components/ui/LimitOrder";
 
 export default function Dashboard() {
   const [isCreatingPKP, setIsCreatingPKP] = useState(false);
@@ -87,9 +88,9 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* {currentAccount && sessionSigs && (
+        {currentAccount && sessionSigs && (
           <LimitOrderForm pkpInfo={pkpInfo} sessionSigs={sessionSigs} />
-        )} */}
+        )}
 
         {currentAccount && sessionSigs && (
           <LimitOrderSDK pkpInfo={pkpInfo} sessionSigs={sessionSigs} />
