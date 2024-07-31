@@ -70,7 +70,7 @@ export default function Dashboard() {
         <Button onClick={signInWithGoogle} disabled={isCreatingPKP}>
           {isCreatingPKP || isLoading
             ? "Processing..."
-            : "Create or Load Lit PKP / Ethereum Wallet with Google Account"}
+            : "Create or Load Lit PKP with Google Account"}
         </Button>
 
         {pkpInfo && (
